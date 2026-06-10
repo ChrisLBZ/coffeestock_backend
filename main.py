@@ -9,8 +9,9 @@ import jwt
 from datetime import datetime, timedelta, timezone
 import hashlib
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import os
 
-SECRET_KEY = "SUA_CHAVE_SECRETA_SUPER_SECRETA" # Mude isso na nuvem!
+SECRET_KEY = os.getenv("SECRET_KEY", "chave-temporaria-para-testes-locais")
 ALGORITHM = "HS256"
 
 # Função nativa e segura para gerar os hashes de senha sem limite de bytes
