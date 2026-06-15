@@ -18,11 +18,19 @@ ALGORITHM = "HS256"
 def gerar_senha_hash(senha: str) -> str:
     return hashlib.sha256(senha.encode('utf-8')).hexdigest()    
 
-models.Base.metadata.create_all(bind=engine)
+# --- REMOVIDO DAQUI: models.Base.metadata.create_all(bind=engine) ---
 
 app = FastAPI(title="CoffeeStock API")
 
-# NOVO: Instanciação do manipulador que a Vercel chamará obrigatoriamente
+# CORREÇÃO SERVERLESS: Cria as tabelas de forma segura no ciclo de vida da API
+@app.on_event("startup")
+def startup_event():
+    try:
+        models.Base.metadata.create_all(bind=engine)
+        print("Tabelas verificadas/criadas com sucesso no Supabase.")
+    except Exception as e:
+        print(f"Aviso na inicialização do banco: {e}")
+
 handler = Mangum(app)
 
 security = HTTPBearer()
