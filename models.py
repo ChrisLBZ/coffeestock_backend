@@ -6,7 +6,7 @@ from database import Base
 class Usuario(Base):
     __tablename__ = "usuarios"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True,autoincrement=True)
     username = Column(String, unique=True, index=True, nullable=False)
     senha_hash = Column(String, nullable=False) # Armazena a senha criptografada
     cargo = Column(String, default="operador")   # 'admin' ou 'operador'
@@ -14,7 +14,7 @@ class Usuario(Base):
 class CafeEstoque(Base):
     __tablename__ = "cafe_estoque"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nome = Column(String, unique=True, index=True)
     quantidade_kg = Column(Float, default=0.0)
     preco_250g = Column(Float, default=0.0)
@@ -24,7 +24,7 @@ class CafeEstoque(Base):
 class Pedido(Base):
     __tablename__ = "pedidos"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     cliente = Column(String, nullable=False)
     cafe_id = Column(Integer, nullable=False)
     tamanho_pacote = Column(String, nullable=False)
