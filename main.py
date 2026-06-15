@@ -22,6 +22,23 @@ def gerar_senha_hash(senha: str) -> str:
 
 app = FastAPI(title="CoffeeStock API")
 
+@app.get("/criar-admin-obrigatorio")
+def criar_admin_obrigatorio(db: Session = Depends(get_db)):
+    # Verifica se o admin já existe
+    existe = db.query(models.Usuario).filter(models.Usuario.username == "admin").first()
+    if existe:
+        return {"status": "O usuário admin já existe no Supabase!"}
+    
+    # Se não existir, cria ele
+    novo_admin = models.Usuario(
+        username="admin",
+        senha_hash=gerar_senha_hash("admin123"),
+        cargo="admin"
+    )
+    db.add(novo_admin)
+    db.commit()
+    return {"status": "Usuário admin criado com sucesso no Supabase!"}
+
 # CORREÇÃO SERVERLESS: Cria as tabelas de forma segura no ciclo de vida da API
 @app.on_event("startup")
 def startup_event():
