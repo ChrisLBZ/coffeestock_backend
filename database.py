@@ -8,7 +8,7 @@ SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./cafe.db")
 
 # O SQLAlchemy exige que o prefixo do driver seja 'postgresql://' e não 'postgres://'
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+pg8000://", 1)
 
 # Configuração adaptada para o ambiente do Supabase
 if "sqlite" in SQLALCHEMY_DATABASE_URL:

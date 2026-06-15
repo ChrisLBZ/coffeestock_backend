@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import os
-from mangum import Mangum  # <-- NOVO: Adaptador Serverless para a Vercel
+from mangum import Mangum
 
 SECRET_KEY = os.getenv("SECRET_KEY", "chave-temporaria-para-testes-locais")
 ALGORITHM = "HS256"
