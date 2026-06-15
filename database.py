@@ -1,18 +1,31 @@
+import os
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.pool import NullPool
 
-# Cria o arquivo do banco localmente
-SQLALCHEMY_DATABASE_URL = "sqlite:///./cafe.db"
+# Tenta ler a URL do Supabase. Se não houver (testes locais), usa o SQLite de fallback.
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./cafe.db")
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# O SQLAlchemy exige que o prefixo do driver seja 'postgresql://' e não 'postgres://'
+if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Configuração adaptada para o ambiente do Supabase
+if "sqlite" in SQLALCHEMY_DATABASE_URL:
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    )
+else:
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        poolclass=NullPool,  # Evita estouro de conexões no plano gratuito
+        client_encoding='utf8'
+    )
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-# Função auxiliar para abrir e fechar a conexão com o banco em cada requisição
 def get_db():
     db = SessionLocal()
     try:
