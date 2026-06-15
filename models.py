@@ -11,7 +11,7 @@ class Usuario(Base):
     senha_hash = Column(String, nullable=False) # Armazena a senha criptografada
     cargo = Column(String, default="operador")   # 'admin' ou 'operador'
 
-class CafeEstoque(Base):
+class EstoqueCafe(Base):
     __tablename__ = "cafe_estoque"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
