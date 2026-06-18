@@ -157,17 +157,11 @@ def criar_pedido(
     if not cafe:
         raise HTTPException(status_code=404, detail="Tipo de café não encontrado no estoque")
 
-    peso_por_unidade = 0.25 if pedido.tamanho_pacote == "250g" else (0.50 if pedido.tamanho_pacote == "500g" else 1.0)
-    peso_total_pedido = peso_por_unidade * pedido.quantidade
-
-    if cafe.quantidade_kg < peso_total_pedido:
-        raise HTTPException(status_code=400, detail=f"Estoque insuficiente. Disponível: {cafe.quantidade_kg:.2f} kg")
-
+    # Calcula o valor total do pedido baseado no tamanho do pacote escolhido
     preco_unitario = cafe.preco_250g if pedido.tamanho_pacote == "250g" else (cafe.preco_500g if pedido.tamanho_pacote == "500g" else cafe.preco_1kg)
     valor_total_calculado = preco_unitario * pedido.quantidade
 
-    cafe.quantidade_kg -= peso_total_pedido
-
+    # ALTERADO: Criamos o pedido direto SEM checar e SEM subtrair quilos do estoque aqui
     novo_pedido = models.Pedido(
         cliente=pedido.cliente,
         cafe_id=pedido.cafe_id,
@@ -179,7 +173,7 @@ def criar_pedido(
         endereco=pedido.endereco,
         pago=pedido.pago,
         valor_total=valor_total_calculado,
-        status="aguardando",
+        status="aguardando",  # Todo pedido nasce em stand-by
         data_pedido=datetime.now(timezone.utc)
     )
 
@@ -205,9 +199,30 @@ def atualizar_status_pedido(
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido não encontrado")
 
+    # NOVA LÓGICA: Se o pedido está saindo de 'aguardando' para 'separado', valida e baixa o estoque
+    if pedido.status == "aguardando" and dados.status == "separado":
+        cafe = db.query(models.EstoqueCafe).filter(models.EstoqueCafe.id == pedido.cafe_id).first()
+        if not cafe:
+            raise HTTPException(status_code=404, detail="O café deste pedido não existe mais no estoque")
+
+        # Calcula o peso que este pedido precisa
+        peso_por_unidade = 0.25 if pedido.tamanho_pacote == "250g" else (0.50 if pedido.tamanho_pacote == "500g" else 1.0)
+        peso_total_pedido = peso_por_unidade * pedido.quantidade
+
+        # Bloqueia a separação se não houver matéria-prima suficiente no Supabase
+        if cafe.quantidade_kg < peso_total_pedido:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Não é possível separar. Estoque insuficiente para o café '{cafe.nome}'. Disponível: {cafe.quantidade_kg:.2f} kg. Necessário: {peso_total_pedido:.2f} kg."
+            )
+
+        # Se passou no teste, subtrai os quilos do estoque definitivamente
+        cafe.quantidade_kg -= peso_total_pedido
+
+    # Atualiza o status do pedido para o novo estado (seja separado, enviado ou entregue)
     pedido.status = dados.status
     db.commit()
-    return {"detail": "Status updated"}
+    return {"detail": f"Status alterado para {dados.status} com sucesso"}
 
 @app.put("/pedidos/{pedido_id}/pagamento")
 def atualizar_pagamento_pedido(
